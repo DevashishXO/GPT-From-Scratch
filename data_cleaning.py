@@ -32,9 +32,11 @@ cleaned_texts = [clean_text(t) for t in raw_texts]
 # Joining with double newlines between works
 final_text = "\n\n".join(cleaned_texts)
 
-MAX_CHARS = 1_200_000  # ~1.2M, slightly larger than Tiny Shakespeare
-if len(final_text) > MAX_CHARS:
-    final_text = final_text[:MAX_CHARS]
+
+# Optional: Truncate to a maximum character limit if needed. I truncated but then had to manually adjust the dataset because the last poem was cut off abruptly which is not ideal.
+# MAX_CHARS = 1_200_000  # ~1.2M, slightly larger than Tiny Shakespeare
+# if len(final_text) > MAX_CHARS:
+#     final_text = final_text[:MAX_CHARS]
 
 with open("dataset/input.txt", "w", encoding="utf-8") as f:
     f.write(final_text)
