@@ -25,23 +25,28 @@ class Config:
     dataset_path: str = "dataset/new_input.txt"
     tokenizer_dir: str = "tokenizer"
     tokenizer_file: str = "tokenizer/bpe_tokenizer.json"
-    vocab_size: int = 8000 # changed from 10000
+    vocab_size: int = 8000 # changed from 10000 
     force_retrain_tokenizer: bool = False  # set True to retrain with ByteLevel BPE
+    dataset_token_limit: Optional[int] = 1_500_000  # NEW: faster runs   
     # model
-    n_embd: int = 384
+    n_embd: int = 320               # CHANGED: 384 -> 320 (faster)
     n_head: int = 6
-    n_layer: int = 4 # changed from 6
-    dropout: float = 0.4           # stronger regularization
-    emb_dropout: float = 0.1       # new: embedding dropout
+    n_layer: int = 3                # CHANGED: 4 -> 3 (faster)
+    dropout: float = 0.5            # stronger regularization
+    emb_dropout: float = 0.1        # new: embedding dropout
     block_size: int = 256
+    # attention selection
+    attn_type: str = "mlha"        # NEW: "mha" | "mqa" | "gqa" | "mlha"
+    num_kv_heads: int = 1         # NEW: for MQA/GQA (MQA=1, GQA>1 and divides n_head)
+    latent_kv_heads: int = 4      # NEW: for MLHA (# latent K/V heads)
     # training
     batch_size: int = 32 # changed from 64
-    max_iters: int = 25000
-    eval_interval: int = 1000 # changed from 250
+    max_iters: int = 5000 # changed from 25000 for faster runs
+    eval_interval: int = 500      # CHANGED: 1000 -> 500
     eval_iters: int = 50 # changed from 200
     learning_rate: float = 3e-4
     min_lr: float = 3e-5
-    warmup_iters: int = 2000
+    warmup_iters: int = 1000      # CHANGED: 2000 -> 1000
     weight_decay: float = 0.1
     betas: tuple = (0.9, 0.95)
     grad_clip: float = 1.0
@@ -51,6 +56,7 @@ class Config:
     save_every: int = 500
     ckpt_dir: str = "checkpoints"
     resume_path: Optional[str] = None
+    use_best_for_generation: bool = True   # NEW
     # loss
     label_smoothing: float = 0.1   # new: improves generalization
     # generation
@@ -218,6 +224,77 @@ class MultiHeadAttention(nn.Module):
         out = torch.cat([h(x) for h in self.heads], dim=-1)
         out = self.dropout(self.proj(out))
         return out
+    pass
+
+# NEW: MQA/GQA/MLHA implementations (project Q/K/V once and reshape)
+class MultiQueryAttention(nn.Module):
+    def __init__(self, n_embd: int, n_head: int, kv_heads: int):
+        super().__init__()
+        assert n_head % kv_heads == 0, "n_head must be divisible by kv_heads"
+        self.n_head = n_head
+        self.kv_heads = kv_heads
+        self.head_size = n_embd // n_head
+        self.q_proj = nn.Linear(n_embd, n_head * self.head_size, bias=False)
+        self.k_proj = nn.Linear(n_embd, kv_heads * self.head_size, bias=False)
+        self.v_proj = nn.Linear(n_embd, kv_heads * self.head_size, bias=False)
+        self.proj = nn.Linear(n_head * self.head_size, n_embd)
+        self.dropout = nn.Dropout(cfg.dropout)
+        self.register_buffer('tril', torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
+
+    def forward(self, x):
+        B, T, C = x.shape
+        q = self.q_proj(x).view(B, T, self.n_head, self.head_size).transpose(1, 2)  # (B,H,T,dh)
+        k = self.k_proj(x).view(B, T, self.kv_heads, self.head_size).transpose(1, 2)  # (B,KV,T,dh)
+        v = self.v_proj(x).view(B, T, self.kv_heads, self.head_size).transpose(1, 2)  # (B,KV,T,dh)
+
+        if self.kv_heads != self.n_head:
+            repeat = self.n_head // self.kv_heads
+            k = k.repeat_interleave(repeat, dim=1)  # (B,H,T,dh)
+            v = v.repeat_interleave(repeat, dim=1)  # (B,H,T,dh)
+
+        att = (q @ k.transpose(-2, -1)) * (self.head_size ** -0.5)  # (B,H,T,T)
+        att = att.masked_fill(self.tril[:T, :T] == 0, torch.finfo(att.dtype).min)
+        att = F.softmax(att, dim=-1)
+        att = self.dropout(att)
+        out = att @ v  # (B,H,T,dh)
+        out = out.transpose(1, 2).contiguous().view(B, T, self.n_head * self.head_size)
+        return self.dropout(self.proj(out))
+
+class MultiHeadLatentAttention(nn.Module):
+    def __init__(self, n_embd: int, n_head: int, latent_heads: int):
+        super().__init__()
+        assert n_head >= 1 and latent_heads >= 1
+        self.n_head = n_head
+        self.latent_heads = latent_heads
+        self.head_size = n_embd // n_head
+        self.q_proj = nn.Linear(n_embd, n_head * self.head_size, bias=False)
+        self.k_lat_proj = nn.Linear(n_embd, latent_heads * self.head_size, bias=False)
+        self.v_lat_proj = nn.Linear(n_embd, latent_heads * self.head_size, bias=False)
+        # mixing matrix to map latent heads -> per-head K/V
+        self.mix = nn.Parameter(torch.empty(n_head, latent_heads))
+        nn.init.normal_(self.mix, mean=0.0, std=1.0 / max(1, latent_heads))
+        self.proj = nn.Linear(n_head * self.head_size, n_embd)
+        self.dropout = nn.Dropout(cfg.dropout)
+        self.register_buffer('tril', torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
+
+    def forward(self, x):
+        B, T, C = x.shape
+        q = self.q_proj(x).view(B, T, self.n_head, self.head_size).transpose(1, 2)  # (B,H,T,dh)
+        k_lat = self.k_lat_proj(x).view(B, T, self.latent_heads, self.head_size).transpose(1, 2)  # (B,L,T,dh)
+        v_lat = self.v_lat_proj(x).view(B, T, self.latent_heads, self.head_size).transpose(1, 2)  # (B,L,T,dh)
+
+        w = torch.softmax(self.mix, dim=-1)  # (H,L)
+        # mix latent K/V into per-head K/V
+        k = torch.einsum("bltd,hl->bhtd", k_lat, w)  # (B,H,T,dh)
+        v = torch.einsum("bltd,hl->bhtd", v_lat, w)  # (B,H,T,dh)
+
+        att = (q @ k.transpose(-2, -1)) * (self.head_size ** -0.5)  # (B,H,T,T)
+        att = att.masked_fill(self.tril[:T, :T] == 0, torch.finfo(att.dtype).min)
+        att = F.softmax(att, dim=-1)
+        att = self.dropout(att)
+        out = att @ v  # (B,H,T,dh)
+        out = out.transpose(1, 2).contiguous().view(B, T, self.n_head * self.head_size)
+        return self.dropout(self.proj(out))
 
 class FeedForward(nn.Module):
     def __init__(self, n_embd: int):
@@ -236,7 +313,17 @@ class Block(nn.Module):
     def __init__(self, n_embd: int, n_head: int):
         super().__init__()
         head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
+# SELECT ATTENTION HERE
+        if cfg.attn_type == "mha":
+            self.sa = MultiHeadAttention(n_head, head_size)
+        elif cfg.attn_type == "mqa":
+            self.sa = MultiQueryAttention(n_embd=n_embd, n_head=n_head, kv_heads=1)
+        elif cfg.attn_type == "gqa":
+            self.sa = MultiQueryAttention(n_embd=n_embd, n_head=n_head, kv_heads=cfg.num_kv_heads)
+        elif cfg.attn_type == "mlha":
+            self.sa = MultiHeadLatentAttention(n_embd=n_embd, n_head=n_head, latent_heads=cfg.latent_kv_heads)
+        else:
+            raise ValueError(f"Unknown attn_type: {cfg.attn_type}")
         self.ff = FeedForward(n_embd)
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
@@ -428,6 +515,16 @@ for iter in range(start_iter, cfg.max_iters):
 final_model_path = os.path.join(cfg.ckpt_dir, "gpt_final.pt")
 torch.save(model.state_dict(), final_model_path)
 print(f"✅ Final model saved to {final_model_path}")
+
+# NEW: optionally reload best.pt for generation
+best_path = os.path.join(cfg.ckpt_dir, "best.pt")
+if cfg.use_best_for_generation and os.path.exists(best_path):
+    try:
+        ckpt = torch.load(best_path, map_location=device)
+        model.load_state_dict(ckpt["model"])
+        print(f"🌟 Loaded best checkpoint for generation: {best_path}")
+    except Exception as e:
+        print(f"⚠️ Could not load best.pt for generation: {e}")
 
 context = torch.tensor([[BOS_ID]], dtype=torch.long, device=device)
 generated_ids = model.generate(
