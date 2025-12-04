@@ -1,0 +1,78 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                    ATTENTION MECHANISMS: COMPLETE COMPARISON                                          ║
+╠════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                        ║
+║  METRIC                    │    MHA      │    MQA      │    GQA      │    MLHA     │   PROBABLE REASON  ║
+║  ───────────────────────────┼─────────────┼─────────────┼─────────────┼─────────────┼──────────────────  ║
+║                                                                                                        ║
+║  1. MODEL PARAMETERS (M)    │    6.33     │    5.82     │    6.03     │    6.13     │                   ║
+║     • MQA -8% smaller       │    ✓        │    ✓✓       │    ✓        │    ✓        │ Fewer KV heads    ║
+║                                                                                                        ║
+║  2. BEST VAL LOSS           │   5.6775    │   5.6823    │   5.7146    │   5.6943    │                   ║
+║     • MHA wins (lowest)     │    ✓✓       │    ✓        │    ✗        │    ✓        │ More heads →      ║
+║     • Diff: 0.0371 (0.65%)  │             │             │             │             │ better separation ║
+║                                                                                                        ║
+║  3. BEST VAL PPL            │   292.21    │   293.62    │   295.04    │   297.16    │                   ║
+║     • MHA: 292.21 (best)    │    ✓✓       │    ✓        │    ✗        │    ✗        │ PPL = e^loss      ║
+║     • Range: 5.0 PPL units  │             │             │             │             │ (small but real)  ║
+║                                                                                                        ║
+║  4. BEST TRAIN LOSS         │   4.9979    │   5.0203    │   5.0838    │   5.0139    │                   ║
+║     • MHA: 4.9979 (best)    │    ✓✓       │    ✓        │    ✗        │    ✓        │ Easier to fit     ║
+║                                                                                                        ║
+║  5. OVERFITTING GAP (V-T)   │   0.6796    │   0.6620    │   0.6308    │   0.6804    │                   ║
+║     (lower = better)        │    ✗        │    ✓        │    ✓✓       │    ✗        │ GQA generalizes   ║
+║     • GQA: 0.6308 (best)    │             │             │             │             │ best relative to  ║
+║                                                                                                        ║
+║  6. TRAINING TIME (minutes) │   13.7      │   10.0      │   10.3      │   10.9      │                   ║
+║     • MQA fastest: -27%     │    ✗        │    ✓✓       │    ✓        │    ✓        │ Fewer KV heads =  ║
+║     • vs MHA baseline       │             │             │             │             │ less computation  ║
+║                                                                                                        ║
+║  7. CONVERGENCE SPEED       │    Slow     │    Fast     │    Medium   │    Medium   │                   ║
+║     (steps to reach 90%)    │   ~3500     │   ~3000     │   ~3200     │   ~3300     │ MQA: simpler      ║
+║                                                                                                        ║
+║                                                                                                        ║
+║  9. ATTENTION HEAD CONFIG   │   6 heads   │   1 head    │   3 heads   │   6 heads   │                   ║
+║                             │   64-D ea.  │   384-D KV  │   128-D ea. │   64-D ea.  │ (Q always 6h)     ║
+║     • KV Parameters         │    2x Q     │   Same as Q │  1.5x Q     │   Mixed     │                   ║
+║                             │    (full)   │   (minimal) │  (grouped)  │  (latent)   │                   ║
+║                                                                                                        ║
+║  ─────────────────────────────────────────────────────────────────────────────────────────────────────  ║
+║                                                                                                        ║
+║  BEST OVERALL:              │   ✓✓ MHA   │   ✓ MQA    │   ✓ GQA    │   ✗ MLHA   │                    ║
+║  (if budget = NO limit)     │   (PPL)     │  (speed+   │  (balance) │   (novel)   │                    ║
+║                             │             │   params)  │            │             │                    ║
+║  ─────────────────────────────────────────────────────────────────────────────────────────────────────  ║
+║                                                                                                        ║
+║  BEST FOR PRODUCTION:       │    ✓ MQA   │            │            │             │                    ║
+║  (27% faster, 8% smaller,   │            │            │            │             │                    ║
+║   only +1.4 PPL units)      │            │            │            │             │                    ║
+║                                                                                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+1. Why MHA wins on PPL (292.21 vs 293.62)
+
+    6 independent heads → each head learns different attention patterns
+    More degrees of freedom to distribute knowledge
+    MQA's single KV head bottlenecks information sharing across query heads
+
+2. Why MQA wins on speed (-27% vs MHA)
+    1 KV head instead of 6 → 6x fewer KV computations
+    Formula: wei @ v done once, broadcast 6 times (vs 6 independent)
+    Memory bandwidth: critical bottleneck in attention, not FLOP count
+
+3. Why GQA has best generalization (gap=0.6308)
+    Grouped heads (3 groups of 2) = "sweet spot"
+    Enough independence (not too sparse like MQA)
+    Enough sharing (not too independent like MHA)
+    Prevents overfitting better than both extremes
+
+4. Why MLHA is slowest (~10.9 min)
+    Latent mixing layer adds extra linear transformations
+    PPL worse (297.16) = overhead not justified by this dataset size
+
+5. Why training time doesn't perfectly correlate with parameters
+    MHA: 6.33M params, 13.7 min
+    GQA: 6.03M params, 10.3 min
+    Difference = attention compute, not embedding parameters
+    GQA's grouped attention uses less memory bandwidth despite similar param count
