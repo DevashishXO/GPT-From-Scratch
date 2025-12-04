@@ -1,0 +1,94 @@
+📥 Cloning dataset repo...
+🔧 Training new BPE tokenizer...
+✅ Tokenizer trained and saved.
+📊 Vocab size: 8000
+📖 Dataset length (chars): 6,793,953
+🤖 Model parameters: 6.33 M
+Step 0: train loss 9.0347 (ppl 8389.58), val loss 9.0315 (ppl 8362.32), lr 0.00e+00
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+[Progress: 100/5000 (2.0%)] elapsed 0.3 min
+[Progress: 200/5000 (4.0%)] elapsed 0.6 min
+[Progress: 300/5000 (6.0%)] elapsed 0.9 min
+[Progress: 400/5000 (8.0%)] elapsed 1.1 min
+[Progress: 500/5000 (10.0%)] elapsed 1.4 min
+Step 500: train loss 6.2711 (ppl 529.08), val loss 6.4562 (ppl 636.67), lr 1.50e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 500: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_500.pt
+[Progress: 600/5000 (12.0%)] elapsed 1.7 min
+[Progress: 700/5000 (14.0%)] elapsed 2.0 min
+[Progress: 800/5000 (16.0%)] elapsed 2.2 min
+[Progress: 900/5000 (18.0%)] elapsed 2.5 min
+[Progress: 1000/5000 (20.0%)] elapsed 2.8 min
+Step 1000: train loss 5.7919 (ppl 327.65), val loss 6.1114 (ppl 450.97), lr 3.00e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 1000: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_1000.pt
+[Progress: 1100/5000 (22.0%)] elapsed 3.1 min
+[Progress: 1200/5000 (24.0%)] elapsed 3.4 min
+[Progress: 1300/5000 (26.0%)] elapsed 3.6 min
+[Progress: 1400/5000 (28.0%)] elapsed 3.9 min
+[Progress: 1500/5000 (30.0%)] elapsed 4.2 min
+Step 1500: train loss 5.5163 (ppl 248.72), val loss 5.9461 (ppl 382.25), lr 2.90e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 1500: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_1500.pt
+[Progress: 1600/5000 (32.0%)] elapsed 4.5 min
+[Progress: 1700/5000 (34.0%)] elapsed 4.8 min
+[Progress: 1800/5000 (36.0%)] elapsed 5.0 min
+[Progress: 1900/5000 (38.0%)] elapsed 5.3 min
+[Progress: 2000/5000 (40.0%)] elapsed 5.6 min
+Step 2000: train loss 5.3366 (ppl 207.81), val loss 5.8294 (ppl 340.16), lr 2.60e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 2000: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_2000.pt
+[Progress: 2100/5000 (42.0%)] elapsed 5.9 min
+[Progress: 2200/5000 (44.0%)] elapsed 6.2 min
+[Progress: 2300/5000 (46.0%)] elapsed 6.4 min
+[Progress: 2400/5000 (48.0%)] elapsed 6.7 min
+[Progress: 2500/5000 (50.0%)] elapsed 7.0 min
+Step 2500: train loss 5.2245 (ppl 185.77), val loss 5.7827 (ppl 324.64), lr 2.17e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 2500: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_2500.pt
+[Progress: 2600/5000 (52.0%)] elapsed 7.3 min
+[Progress: 2700/5000 (54.0%)] elapsed 7.6 min
+[Progress: 2800/5000 (56.0%)] elapsed 7.8 min
+[Progress: 2900/5000 (58.0%)] elapsed 8.1 min
+[Progress: 3000/5000 (60.0%)] elapsed 8.4 min
+Step 3000: train loss 5.1347 (ppl 169.81), val loss 5.7272 (ppl 307.12), lr 1.65e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 3000: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_3000.pt
+[Progress: 3100/5000 (62.0%)] elapsed 8.7 min
+[Progress: 3200/5000 (64.0%)] elapsed 9.0 min
+[Progress: 3300/5000 (66.0%)] elapsed 9.2 min
+[Progress: 3400/5000 (68.0%)] elapsed 9.5 min
+[Progress: 3500/5000 (70.0%)] elapsed 9.8 min
+Step 3500: train loss 5.0845 (ppl 161.50), val loss 5.7015 (ppl 299.30), lr 1.13e-04
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 3500: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_3500.pt
+[Progress: 3600/5000 (72.0%)] elapsed 10.1 min
+[Progress: 3700/5000 (74.0%)] elapsed 10.4 min
+[Progress: 3800/5000 (76.0%)] elapsed 10.6 min
+[Progress: 3900/5000 (78.0%)] elapsed 10.9 min
+[Progress: 4000/5000 (80.0%)] elapsed 11.2 min
+Step 4000: train loss 5.0486 (ppl 155.80), val loss 5.7012 (ppl 299.23), lr 6.95e-05
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 4000: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_4000.pt
+[Progress: 4100/5000 (82.0%)] elapsed 11.5 min
+[Progress: 4200/5000 (84.0%)] elapsed 11.8 min
+[Progress: 4300/5000 (86.0%)] elapsed 12.0 min
+[Progress: 4400/5000 (88.0%)] elapsed 12.3 min
+[Progress: 4500/5000 (90.0%)] elapsed 12.6 min
+Step 4500: train loss 5.0240 (ppl 152.02), val loss 5.6775 (ppl 292.21), lr 4.03e-05
+ -> 💾 Best checkpoint updated: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+💾 Checkpoint saved at step 4500: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/checkpoint_4500.pt
+[Progress: 4600/5000 (92.0%)] elapsed 12.9 min
+[Progress: 4700/5000 (94.0%)] elapsed 13.2 min
+[Progress: 4800/5000 (96.0%)] elapsed 13.4 min
+[Progress: 4900/5000 (98.0%)] elapsed 13.7 min
+Step 4999: train loss 4.9979 (ppl 148.10), val loss 5.6975 (ppl 298.12), lr 3.00e-05
+✅ Final model saved to /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/gpt_final.pt
+🌟 Loaded best checkpoint for generation: /content/drive/MyDrive/gpt_from_scratch_runs/run_20251119_024627/checkpoints/best.pt
+📝 Sample:
+ 2 0 - सौ रुपये मिलते है । रुपये मिलें - पाँच रुपये दे - रुपये से रुपये दे दे थे ।
+
+📦 Zipping checkpoints for download...
+✅ Run this in a new cell to download:
+   from google.colab import files
+   files.download('checkpoints.zip')
